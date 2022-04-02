@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: cassandra:4.0.3
+    container_name: cassandra
+    ports:
+      - '9042:9042'
+    # volumes:
+    #   - /var/lib/cassandra/data:/var/lib/cassandra/data
+    #   - /var/lib/cassandra/commitlog:/var/lib/cassandra/commitlog
+    #   - /var/lib/cassandra/saved_caches:/var/lib/cassandra/saved_caches
+    environment:
+      - CASSANDRA_CLUSTER_NAME=akka-cassandra-cluster
+      # - CASSANDRA_SEEDS=cassandra
+      # - CASSANDRA_LISTEN_ADDRESS=
