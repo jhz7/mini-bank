@@ -1,8 +1,8 @@
 package com.bank.actors
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.{ ActorRef, Behavior }
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
+import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
 
 /** Represents a single bank account
   */
@@ -12,22 +12,22 @@ class PersistentBankAccount {
   sealed trait Command
 
   final case class CreateBankAccount(
-      user: String,
-      currency: String,
-      initialBalance: BigDecimal,
-      replyTo: ActorRef[Response]
+    user: String,
+    currency: String,
+    initialBalance: BigDecimal,
+    replyTo: ActorRef[Response]
   ) extends Command
 
   final case class UpdateBalance(
-      id: String,
-      currency: String,
-      amount: BigDecimal,
-      replyTo: ActorRef[Response]
+    id: String,
+    currency: String,
+    amount: BigDecimal,
+    replyTo: ActorRef[Response]
   ) extends Command
 
   final case class GetBankAccount(
-      id: String,
-      replyTo: ActorRef[Response]
+    id: String,
+    replyTo: ActorRef[Response]
   ) extends Command
 
   // events
@@ -39,10 +39,10 @@ class PersistentBankAccount {
 
   // State
   final case class BankAccount(
-      id: String,
-      user: String,
-      currency: String,
-      balance: BigDecimal
+    id: String,
+    user: String,
+    currency: String,
+    balance: BigDecimal
   )
 
   // Responses
@@ -50,11 +50,9 @@ class PersistentBankAccount {
 
   final case class BankAccountCreatedResponse(id: String) extends Response
 
-  final case class BalanceUpdatedResponse(bankAccount: Option[BankAccount])
-      extends Response
+  final case class BalanceUpdatedResponse(bankAccount: Option[BankAccount]) extends Response
 
-  final case class GetBankAccountResponse(bankAccount: Option[BankAccount])
-      extends Response
+  final case class GetBankAccountResponse(bankAccount: Option[BankAccount]) extends Response
 
   val commandHandler: (BankAccount, Command) => Effect[Event, BankAccount] =
     (state, command) =>
@@ -87,9 +85,7 @@ class PersistentBankAccount {
           else
             Effect
               .persist(BalanceUpdated(amount))
-              .thenReply(bank)(newState =>
-                BalanceUpdatedResponse(Some(newState))
-              )
+              .thenReply(bank)(newState => BalanceUpdatedResponse(Some(newState)))
 
         case GetBankAccount(_, bank) =>
           Effect.reply(bank)(GetBankAccountResponse(Some(state)))
@@ -98,7 +94,7 @@ class PersistentBankAccount {
   val eventHandler: (BankAccount, Event) => BankAccount = (state, event) =>
     event match {
       case BankAccountCreated(bankAccount) => bankAccount
-      case BalanceUpdated(amount) =>
+      case BalanceUpdated(amount)          =>
         state.copy(balance = state.balance + amount)
     }
 
