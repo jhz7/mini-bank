@@ -6,36 +6,50 @@ import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
 
 /** Represents a single bank account
   */
-class PersistentBankAccount {
-
+object PersistentBankAccount {
   // Commands
   sealed trait Command
+  object Command {
+    final case class CreateBankAccount(
+      user: String,
+      currency: String,
+      initialBalance: BigDecimal,
+      replyTo: ActorRef[Response]
+    ) extends Command
 
-  final case class CreateBankAccount(
-    user: String,
-    currency: String,
-    initialBalance: BigDecimal,
-    replyTo: ActorRef[Response]
-  ) extends Command
+    final case class UpdateBalance(
+      id: String,
+      currency: String,
+      amount: BigDecimal,
+      replyTo: ActorRef[Response]
+    ) extends Command
 
-  final case class UpdateBalance(
-    id: String,
-    currency: String,
-    amount: BigDecimal,
-    replyTo: ActorRef[Response]
-  ) extends Command
+//    final case class Deposit(
+    //      id: String,
+    //      currency: String,
+    //      amount: BigDecimal,
+    //      replyTo: ActorRef[Response]
+    //    ) extends Command
+    //
+    //    final case class Withdraw(
+    //      id: String,
+    //      currency: String,
+    //      amount: BigDecimal,
+    //      replyTo: ActorRef[Response]
+    //    ) extends Command
 
-  final case class GetBankAccount(
-    id: String,
-    replyTo: ActorRef[Response]
-  ) extends Command
+    final case class GetBankAccount(
+      id: String,
+      replyTo: ActorRef[Response]
+    ) extends Command
+  }
 
-  // events
+  // Events
   sealed trait Event
-
-  final case class BankAccountCreated(bankAccount: BankAccount) extends Event
-
-  final case class BalanceUpdated(amount: BigDecimal) extends Event
+  object Event {
+    final case class BankAccountCreated(bankAccount: BankAccount) extends Event
+    final case class BalanceUpdated(amount: BigDecimal)           extends Event
+  }
 
   // State
   final case class BankAccount(
@@ -47,12 +61,15 @@ class PersistentBankAccount {
 
   // Responses
   sealed trait Response
+  object Response {
+    final case class BankAccountCreatedResponse(id: String)                   extends Response
+    final case class BalanceUpdatedResponse(bankAccount: Option[BankAccount]) extends Response
+    final case class GetBankAccountResponse(bankAccount: Option[BankAccount]) extends Response
+  }
 
-  final case class BankAccountCreatedResponse(id: String) extends Response
-
-  final case class BalanceUpdatedResponse(bankAccount: Option[BankAccount]) extends Response
-
-  final case class GetBankAccountResponse(bankAccount: Option[BankAccount]) extends Response
+  import Command._
+  import Event._
+  import Response._
 
   val commandHandler: (BankAccount, Command) => Effect[Event, BankAccount] =
     (state, command) =>
@@ -101,7 +118,7 @@ class PersistentBankAccount {
   def apply(id: String): Behavior[Command] =
     EventSourcedBehavior[Command, Event, BankAccount](
       persistenceId = PersistenceId.ofUniqueId(id),
-      emptyState = BankAccount(id, "", "", 0),
+      emptyState = BankAccount(id, user = "", currency = "", balance = 0),
       commandHandler,
       eventHandler
     )
