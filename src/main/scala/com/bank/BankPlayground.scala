@@ -1,8 +1,9 @@
-package com.bank.actors
+package com.bank
 
 import akka.NotUsed
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorSystem, Behavior }
+import com.bank.actors.{ Bank, PersistentBankAccount }
 
 object BankPlayground {
 
