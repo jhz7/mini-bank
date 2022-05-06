@@ -6,6 +6,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
 
 import java.util.UUID
+import scala.util.Failure
 
 object Bank {
 
@@ -36,7 +37,7 @@ object Bank {
         state.accounts
           .get(id)
           .fold[Effect[Event, State]](
-            Effect.reply(replyTo)(BalanceUpdatedResponse(None))
+            Effect.reply(replyTo)(BalanceUpdatedResponse(Failure(new RuntimeException(s"Bank account $id not found"))))
           )(bankAccount => Effect.reply(bankAccount)(updateBalanceCommand))
 
       case getBankAccount @ GetBankAccount(id, replyTo) =>

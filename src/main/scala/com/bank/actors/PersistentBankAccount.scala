@@ -4,6 +4,8 @@ import akka.actor.typed.{ ActorRef, Behavior }
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
 
+import scala.util.{ Failure, Success, Try }
+
 /** Represents a single bank account
   */
 object PersistentBankAccount {
@@ -63,7 +65,7 @@ object PersistentBankAccount {
   sealed trait Response
   object Response {
     final case class BankAccountCreatedResponse(id: String)                   extends Response
-    final case class BalanceUpdatedResponse(bankAccount: Option[BankAccount]) extends Response
+    final case class BalanceUpdatedResponse(bankAccount: Try[BankAccount])    extends Response
     final case class GetBankAccountResponse(bankAccount: Option[BankAccount]) extends Response
   }
 
@@ -98,11 +100,13 @@ object PersistentBankAccount {
           val newBalance = state.balance + amount
 
           if (newBalance < 0)
-            Effect.reply(bank)(BalanceUpdatedResponse(None))
+            Effect.reply(bank)(
+              BalanceUpdatedResponse(Failure(new RuntimeException(("Can not withdraw more than available"))))
+            )
           else
             Effect
               .persist(BalanceUpdated(amount))
-              .thenReply(bank)(newState => BalanceUpdatedResponse(Some(newState)))
+              .thenReply(bank)(newState => BalanceUpdatedResponse(Success(newState)))
 
         case GetBankAccount(_, bank) =>
           Effect.reply(bank)(GetBankAccountResponse(Some(state)))
